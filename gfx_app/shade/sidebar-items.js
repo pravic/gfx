@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["EMPTY",""]],"enum":[["Backend","Shader backend with version numbers."]],"struct":[["GlslVersion","A version number for a specific component of an OpenGL implementation"],["Source","A type storing shader source for different graphics APIs and versions."]]});
