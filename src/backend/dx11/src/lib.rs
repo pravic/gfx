@@ -176,7 +176,7 @@ pub fn create(driver_type: winapi::D3D_DRIVER_TYPE, desc: &winapi::DXGI_SWAP_CHA
     use gfx_core::handle::Producer;
 
     let mut swap_chain = ptr::null_mut();
-    let create_flags = winapi::D3D11_CREATE_DEVICE_FLAG(0); //D3D11_CREATE_DEVICE_DEBUG;
+    let create_flags = winapi::D3D11_CREATE_DEVICE_BGRA_SUPPORT; //D3D11_CREATE_DEVICE_DEBUG;
     let mut device = ptr::null_mut();
     let share = Share {
         capabilities: gfx_core::Capabilities {
