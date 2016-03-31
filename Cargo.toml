@@ -24,13 +24,14 @@ gfx_device_gl = { path = "src/backend/gl", version = "0.9" }
 gfx_window_glutin = { path = "src/window/glutin", version = "0.10" }
 gfx = { path = "src/render", version = "0.10.1" }
 
-[target.x86_64-pc-linux-gnu.dependencies]
+[target.'cfg(target_os="linux")'.dependencies]
 gfx_window_glfw = { path = "src/window/glfw", version = "0.9" }
 gfx_window_sdl = { path = "src/window/sdl", version = "0.1" }
 
 [target.'cfg(target_os="windows")'.dependencies]
 gfx_device_dx11 = { path = "src/backend/dx11", version = "0.1" }
-gfx_window_dxgi = { path = "src/window/dxgi", version = "0.1" }
+gfx_window_sciter = { path = "src/window/dxgi+sciter", version = "0.1" }
+
 
 [[example]]
 name = "blend"
@@ -47,10 +48,6 @@ path = "examples/deferred/main.rs"
 [[example]]
 name = "flowmap"
 path = "examples/flowmap/main.rs"
-
-[[target.x86_64-pc-linux-gnu.example]]
-name = "performance"
-path = "examples/performance/main.rs"
 
 [[example]]
 name = "shadow"
@@ -79,6 +76,7 @@ path = "examples/ubo_tilemap/main.rs"
 [[example]]
 name = "mipmap"
 path = "examples/mipmap/main.rs"
+
 
 [dev_dependencies]
 log = "0.3"

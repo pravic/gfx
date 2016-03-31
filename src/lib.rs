@@ -18,15 +18,15 @@ extern crate time;
 extern crate glutin;
 extern crate gfx;
 extern crate gfx_device_gl;
+extern crate gfx_window_glutin;
+
 #[cfg(target_os = "windows")]
 extern crate gfx_device_dx11;
-extern crate gfx_window_glutin;
-//extern crate gfx_window_glfw;
 #[cfg(target_os = "windows")]
-extern crate gfx_window_dxgi;
+extern crate gfx_window_sciter;
+
 
 pub mod shade;
-
 
 pub type ColorFormat = gfx::format::Srgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
@@ -81,20 +81,41 @@ impl Drop for Harness {
     }
 }
 
+
+use std::any::Any;
+
 pub trait ApplicationBase<R: gfx::Resources, C: gfx::CommandBuffer<R>> {
     fn new<F>(F, gfx::Encoder<R, C>, Init<R>) -> Self where
         F: gfx::Factory<R>;
+    fn setup<WindowHost: Any>(&mut self, _host: &WindowHost) {}
     fn render<D>(&mut self, &mut D) where
         D: gfx::Device<Resources=R, CommandBuffer=C>;
 }
 
 pub trait Application<R: gfx::Resources>: Sized {
+
+    /// Create application itself.
     fn new<F: gfx::Factory<R>>(F, Init<R>) -> Self;
+
+    /// Provide opaque window data to application.
+    fn setup<WindowHost: Any>(&mut self, _host: &WindowHost) {
+      // do nothing by default
+    }
+
+    /// Pre-render optional phase. If returns `true`, encoder will be flushed.
+    fn render_pre <C: gfx::CommandBuffer<R>>(&mut self, &mut gfx::Encoder<R, C>) -> bool { false }
+
+    /// Main render routine. Encoder will be flushed after it.
     fn render<C: gfx::CommandBuffer<R>>(&mut self, &mut gfx::Encoder<R, C>);
+
+    /// Post-render optional phase. If returns `true`, encoder will be flushed.
+    fn render_post<C: gfx::CommandBuffer<R>>(&mut self, &mut gfx::Encoder<R, C>) -> bool { false }
+
     #[cfg(target_os = "windows")]
     fn launch_default(name: &str) where WrapD3D11<Self>: ApplicationD3D11 {
         WrapD3D11::<Self>::launch(name, DEFAULT_CONFIG);
     }
+
     #[cfg(not(target_os = "windows"))]
     fn launch_default(name: &str) where WrapGL2<Self>: ApplicationGL2 {
         WrapGL2::<Self>::launch(name, DEFAULT_CONFIG);
@@ -128,11 +149,21 @@ impl<R, C, A> ApplicationBase<R, C> for Wrap<R, C, A> where
         }
     }
 
+    fn setup<WindowHost: Any>(&mut self, host: &WindowHost) {
+      self.app.setup(host)
+    }
+
     fn render<D>(&mut self, device: &mut D) where
         D: gfx::Device<Resources=R, CommandBuffer=C>
     {
-        self.app.render(&mut self.encoder);
+      if self.app.render_pre(&mut self.encoder) {
         self.encoder.flush(device);
+      }
+      self.app.render(&mut self.encoder);
+      self.encoder.flush(device);
+      if self.app.render_post(&mut self.encoder) {
+        self.encoder.flush(device);
+      }
     }
 }
 
@@ -198,7 +229,7 @@ impl<
 
         env_logger::init().unwrap();
         let (window, device, mut factory, main_color) =
-            gfx_window_dxgi::init::<ColorFormat>(title, config.size.0, config.size.1)
+            gfx_window_sciter::init::<ColorFormat>(title, config.size.0, config.size.1)
             .unwrap();
         let main_depth = factory.create_depth_stencil_view_only(
             window.size.0, window.size.1).unwrap();
@@ -212,6 +243,8 @@ impl<
             depth: main_depth,
             aspect_ratio: window.size.0 as f32 / window.size.1 as f32,
         });
+
+        app.setup(&window.get_host());
 
         let mut device: gfx_device_dx11::Deferred = device.into();
 
