@@ -87,7 +87,7 @@ pub fn create(name: &str, width: INT, height: INT) -> Result<HWND, ()> {
             WS_EX_ACCEPTFILES | WS_EX_APPWINDOW, // dwExStyle
             class_name.as_ptr(),
             window_name.as_ptr(),
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
             CW_USEDEFAULT, // x
             CW_USEDEFAULT, // y
             width,
